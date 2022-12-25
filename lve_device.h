@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 #include <vector>
+#include <optional>
 
 namespace lve {
     class LveDevice {
@@ -14,14 +15,37 @@ namespace lve {
         ~LveDevice();
 
         VkInstance instance;
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkDevice device;
+        VkQueue graphicsQueue;
     private:
         void createInstance();
 
+        void setupDebugMessenger();
+
+        void pickPhysicalDevice();
+
+        void createLogicalDevice();
+
         bool checkValidationLayerSupport();
 
-        std::vector<const char*> gerRequiredExtensions();
+        struct QueueFamilyIndices {
+             std::optional<uint32_t> graphicsFamily;
 
-        void setupDebugMessenger();
+            bool isComplete() {
+                return graphicsFamily.has_value();
+            }
+        };
+
+        uint32_t rateDeviceSuitability(VkPhysicalDevice device) const;
+
+        std::vector<const char*> validationLayers = {
+                "VK_LAYER_KHRONOS_validation"
+        };
+
+        VkDebugUtilsMessengerEXT debugMessenger{};
+
+        std::vector<const char*> gerRequiredExtensions();
 
         VkResult CreateDebugUtilsMessengerEXT(
             VkInstance vkInstance,
@@ -45,11 +69,7 @@ namespace lve {
 
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
-        std::vector<const char*> validationLayers = {
-            "VK_LAYER_KHRONOS_validation"
-        };
-
-        VkDebugUtilsMessengerEXT debugMessenger;
+        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
 #ifdef NDEBUG
         const bool enableValidationLayers = false;
