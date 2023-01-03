@@ -6,14 +6,18 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <set>
 
 namespace lve {
-    LveDevice::LveDevice() {
+    LveDevice::LveDevice(GLFWwindow *w) : window{w} {
         instance = {};
         device = {};
+        graphicsQueue = {};
+        surface = {};
 
         createInstance();
         setupDebugMessenger();
+        createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
     }
@@ -23,6 +27,7 @@ namespace lve {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
 
+        vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyInstance(instance, nullptr);
         vkDestroyDevice(device, nullptr);
     }
@@ -53,7 +58,7 @@ namespace lve {
         // apply flags
         instanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
-        // enable validation layer
+        // enable instance-level validation layer
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
         if(enableValidationLayers) {
             instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -112,19 +117,25 @@ namespace lve {
     void LveDevice::createLogicalDevice() {
         QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-        queueCreateInfo.queueCount = 1;
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily().value(), indices.presentFamily().value()};
+
         float queuePriority = 1.0f;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+        for (uint32_t queueFamily : uniqueQueueFamilies) {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.queueFamilyIndex = queueFamily;
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &queuePriority;
+            queueCreateInfos.push_back(queueCreateInfo);
+        }
 
         VkDeviceCreateInfo deviceCreateInfo{};
         VkPhysicalDeviceFeatures deviceFeatures{};
 
         deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+        deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
         // device extensions
@@ -134,17 +145,18 @@ namespace lve {
         deviceCreateInfo.enabledExtensionCount = (uint32_t) deviceExtensions.size();
         deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-        // add extensions
-        std::vector<const char*> extensions;
-
-        // add VK_KHR_portability_subset
-        extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-
         if(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device) != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device");
         }
 
-        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+        vkGetDeviceQueue(device, indices.graphicsFamily().value(), 0, &graphicsQueue);
+        vkGetDeviceQueue(device, indices.presentFamily().value(), 0, &presentQueue);
+    }
+
+    void LveDevice::createSurface() {
+        if(glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create window surface");
+        }
     }
 
     bool LveDevice::checkValidationLayerSupport() {
@@ -265,19 +277,26 @@ namespace lve {
         return score;
     }
 
-    LveDevice::QueueFamilyIndices LveDevice::findQueueFamilies(VkPhysicalDevice device) const {
+    LveDevice::QueueFamilyIndices LveDevice::findQueueFamilies(VkPhysicalDevice vkPhysicalDevice) const {
         QueueFamilyIndices indices;
 
         uint32_t queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, nullptr);
 
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, &queueFamilyCount, queueFamilies.data());
 
         int i = 0;
         for (const auto& queueFamily : queueFamilies) {
             if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphicsFamily = i;
+                indices.graphicsFamily() = i;
+            }
+
+            VkBool32 presentSupport = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, surface, &presentSupport);
+
+            if(presentSupport) {
+                indices.presentFamily() = i;
             }
 
             if (indices.isComplete()) {

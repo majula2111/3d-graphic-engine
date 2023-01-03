@@ -11,13 +11,17 @@
 namespace lve {
     class LveDevice {
     public:
-        LveDevice();
+        LveDevice(GLFWwindow *window);
         ~LveDevice();
+
+        GLFWwindow *window;
 
         VkInstance instance;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         VkDevice device;
         VkQueue graphicsQueue;
+        VkQueue presentQueue;
+        VkSurfaceKHR surface;
     private:
         void createInstance();
 
@@ -27,14 +31,20 @@ namespace lve {
 
         void createLogicalDevice();
 
+        void createSurface();
+
         bool checkValidationLayerSupport();
 
         struct QueueFamilyIndices {
-             std::optional<uint32_t> graphicsFamily;
+            std::optional<uint32_t> _graphicsFamily;
+            std::optional<uint32_t> _presentFamily;
 
             bool isComplete() {
-                return graphicsFamily.has_value();
+                return _graphicsFamily.has_value() && _presentFamily.has_value();
             }
+
+            std::optional<uint32_t> & graphicsFamily() { return _graphicsFamily; }
+            std::optional<uint32_t> & presentFamily() { return _graphicsFamily == _presentFamily ? _graphicsFamily : _presentFamily; }
         };
 
         uint32_t rateDeviceSuitability(VkPhysicalDevice device) const;
@@ -69,7 +79,7 @@ namespace lve {
 
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
-        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
+        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice vkPhysicalDevice) const;
 
 #ifdef NDEBUG
         const bool enableValidationLayers = false;
