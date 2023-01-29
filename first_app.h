@@ -17,6 +17,10 @@ namespace lve {
     private:
         LveWindow lveWindow{WIDTH, HEIGHT, "hello vulkan!"};
         LveDevice lveDevice{lveWindow.window()};
-        LvePipeline lvePipeline{"/Users/majula/CLionProjects/3DGraphicEngine/shaders/simple_shader.vert.spv", "/Users/majula/CLionProjects/3DGraphicEngine/shaders/simple_shader.frag.spv"};
+        LvePipeline lvePipeline{
+            "/Users/majula/CLionProjects/3DGraphicEngine/shaders/simple_shader.vert.spv",
+            "/Users/majula/CLionProjects/3DGraphicEngine/shaders/simple_shader.frag.spv",
+            lveDevice
+        };
     };
 }

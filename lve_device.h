@@ -24,6 +24,7 @@ namespace lve {
         VkSurfaceKHR surface;
         VkSwapchainKHR swapChain;
         std::vector<VkImage> swapChainImages;
+        std::vector<VkImageView> swapChainImageViews;
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
     private:
@@ -67,6 +68,8 @@ namespace lve {
         void createSurface();
 
         void createSwapChain();
+
+        void createImageViews();
 
         bool checkValidationLayerSupport();
 
