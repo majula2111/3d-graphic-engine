@@ -14,17 +14,29 @@ namespace lve {
         LvePipeline(const std::string& vertFilepath, const std::string& fragFilepath, const LveDevice &lveDevice);
         ~LvePipeline();
 
-        VkDevice vkDevice;
+        const LveDevice *device;
         VkViewport vkViewport;
         VkRect2D scissor;
         VkRenderPass renderPass;
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
 
+        std::vector<VkFramebuffer> swapChainFramebuffers;
+
+        VkCommandPool commandPool;
+        VkCommandBuffer commandBuffer;
+
+        VkSemaphore imageAvailableSemaphore;
+        VkSemaphore renderFinishedSemaphore;
+        VkFence inFlightFence;
+
         std::vector<VkDynamicState> dynamicStates = {
             VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_SCISSOR,
         };
+
+        void drawFrame();
+
     private:
         static std::vector<char> readFile(const std::string& filepath);
 
@@ -33,6 +45,16 @@ namespace lve {
         void createPipelineLayout();
 
         void createRenderPass(VkFormat imageFormat);
+
+        void createFramebuffers();
+
+        void createCommandPool();
+
+        void createCommandBuffer();
+
+        void createSyncObjects();
+
+        void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
         VkViewport createViewPort(VkExtent2D extent2D);
 

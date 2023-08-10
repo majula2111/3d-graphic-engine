@@ -27,7 +27,7 @@ namespace lve {
         std::vector<VkImageView> swapChainImageViews;
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
-    private:
+
         struct QueueFamilyIndices {
             std::optional<uint32_t> _graphicsFamily;
             std::optional<uint32_t> _presentFamily;
@@ -39,6 +39,9 @@ namespace lve {
             std::optional<uint32_t> & graphicsFamily() { return _graphicsFamily; }
             std::optional<uint32_t> & presentFamily() { return _graphicsFamily == _presentFamily ? _graphicsFamily : _presentFamily; }
         };
+
+        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice vkPhysicalDevice) const;
+    private:
 
         struct SwapChainSupportDetails {
             VkSurfaceCapabilitiesKHR capabilities;
@@ -100,8 +103,6 @@ namespace lve {
         );
 
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
-        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice vkPhysicalDevice) const;
 
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice vkPhysicalDevice) const;
 

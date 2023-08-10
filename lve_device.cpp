@@ -315,6 +315,8 @@ namespace lve {
         if (func != nullptr) {
             func(instance, pDebugMessenger, pAllocator);
         }
+
+        return VK_SUCCESS;
     }
 
     void LveDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo) {
