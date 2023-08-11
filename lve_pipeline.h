@@ -7,14 +7,23 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include "lve_device.h"
+#include "lve_swapchain.h"
 
 namespace lve {
     class LvePipeline {
     public:
-        LvePipeline(const std::string& vertFilepath, const std::string& fragFilepath, const LveDevice &lveDevice);
+        LvePipeline(
+                const std::string& vertFilepath,
+                const std::string& fragFilepath,
+                const LveDevice &lveDevice,
+                const LveSwapChain &lveSwapChain
+        );
         ~LvePipeline();
 
         const LveDevice *device;
+
+        const LveSwapChain *swapChain;
+
         VkViewport vkViewport;
         VkRect2D scissor;
         VkRenderPass renderPass;

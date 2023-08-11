@@ -11,7 +11,7 @@
 namespace lve {
     class LveDevice {
     public:
-        LveDevice(GLFWwindow *window);
+        LveDevice(GLFWwindow *w);
         ~LveDevice();
 
         GLFWwindow *window;
@@ -19,14 +19,11 @@ namespace lve {
         VkInstance instance;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         VkDevice device;
+
         VkQueue graphicsQueue;
         VkQueue presentQueue;
+
         VkSurfaceKHR surface;
-        VkSwapchainKHR swapChain;
-        std::vector<VkImage> swapChainImages;
-        std::vector<VkImageView> swapChainImageViews;
-        VkFormat swapChainImageFormat;
-        VkExtent2D swapChainExtent;
 
         struct QueueFamilyIndices {
             std::optional<uint32_t> _graphicsFamily;
@@ -42,12 +39,6 @@ namespace lve {
 
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice vkPhysicalDevice) const;
     private:
-
-        struct SwapChainSupportDetails {
-            VkSurfaceCapabilitiesKHR capabilities;
-            std::vector<VkSurfaceFormatKHR> formats;
-            std::vector<VkPresentModeKHR> presentModes;
-        };
 
         std::vector<const char*> validationLayers = {
                 "VK_LAYER_KHRONOS_validation"
@@ -69,10 +60,6 @@ namespace lve {
         void createLogicalDevice();
 
         void createSurface();
-
-        void createSwapChain();
-
-        void createImageViews();
 
         bool checkValidationLayerSupport();
 
@@ -103,14 +90,6 @@ namespace lve {
         );
 
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
-        SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice vkPhysicalDevice) const;
-
-        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-
-        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 #ifdef NDEBUG
         const bool enableValidationLayers = false;

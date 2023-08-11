@@ -13,6 +13,8 @@ add_executable(${PROJECT_NAME}
         first_app.cpp
         lve_pipeline.cpp
         lve_device.cpp
+        lve_swapchain.h
+        lve_swapchain.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan glfw)

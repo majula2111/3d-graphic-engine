@@ -6,6 +6,7 @@
 #include "lve_window.h"
 #include "lve_device.h"
 #include "lve_pipeline.h"
+#include "lve_swapchain.h"
 
 namespace lve {
     class FirstApp {
@@ -14,13 +15,16 @@ namespace lve {
         static constexpr int HEIGHT = 420;
 
         void run();
+
     private:
         LveWindow lveWindow{WIDTH, HEIGHT, "hello vulkan!"};
         LveDevice lveDevice{lveWindow.window()};
+        LveSwapChain lveSwapChain{lveWindow.window(), lveDevice};
         LvePipeline lvePipeline{
-            "/Users/nitika/CLionProjects/3d-graphic-engine/shaders/simple_shader.vert.spv",
-            "/Users/nitika/CLionProjects/3d-graphic-engine/shaders/simple_shader.frag.spv",
-            lveDevice
+                "/Users/nitika/CLionProjects/3d-graphic-engine/shaders/simple_shader.vert.spv",
+                "/Users/nitika/CLionProjects/3d-graphic-engine/shaders/simple_shader.frag.spv",
+                lveDevice,
+                lveSwapChain,
         };
     };
 }

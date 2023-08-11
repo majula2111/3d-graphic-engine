@@ -7,14 +7,23 @@
 #include "lve_pipeline.h"
 
 namespace lve {
-    LvePipeline::LvePipeline(const std::string &vertFilepath, const std::string &fragFilepath, const LveDevice &lveDevice) {
+    LvePipeline::LvePipeline(
+            const std::string &vertFilepath,
+            const std::string &fragFilepath,
+            const LveDevice &lveDevice,
+            const LveSwapChain &lveSwapChain
+    ) {
         device = &lveDevice;
-        vkViewport = createViewPort(lveDevice.swapChainExtent);
-        scissor = createRect2D(lveDevice.swapChainExtent, {0, 0});
+
+        swapChain = &lveSwapChain;
+
+        vkViewport = createViewPort(swapChain->swapChainExtent);
+        scissor = createRect2D(swapChain->swapChainExtent, {0, 0});
 
         createPipelineLayout();
-        createRenderPass(lveDevice.swapChainImageFormat);
+        createRenderPass(swapChain->swapChainImageFormat);
         createGraphicsPipeline(vertFilepath, fragFilepath);
+
         createFramebuffers();
         createCommandPool();
         createCommandBuffer();
@@ -155,11 +164,11 @@ namespace lve {
     }
 
     void LvePipeline::createFramebuffers() {
-        swapChainFramebuffers.resize(device->swapChainImageViews.size());
+        swapChainFramebuffers.resize(swapChain->swapChainImageViews.size());
 
-        for (size_t i = 0; i < device->swapChainImageViews.size(); i++) {
+        for (size_t i = 0; i < swapChain->swapChainImageViews.size(); i++) {
             VkImageView attachments[] = {
-                    device->swapChainImageViews[i]
+                    swapChain->swapChainImageViews[i]
             };
 
             VkFramebufferCreateInfo framebufferInfo{};
@@ -167,8 +176,8 @@ namespace lve {
             framebufferInfo.renderPass = renderPass;
             framebufferInfo.attachmentCount = 1;
             framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = device->swapChainExtent.width;
-            framebufferInfo.height = device->swapChainExtent.height;
+            framebufferInfo.width = swapChain->swapChainExtent.width;
+            framebufferInfo.height = swapChain->swapChainExtent.height;
             framebufferInfo.layers = 1;
 
             if (vkCreateFramebuffer(device->device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) !=
@@ -231,7 +240,7 @@ namespace lve {
         renderPassInfo.renderPass = renderPass;
         renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
         renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = device->swapChainExtent;
+        renderPassInfo.renderArea.extent = swapChain->swapChainExtent;
 
         VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
         renderPassInfo.clearValueCount = 1;
@@ -244,15 +253,15 @@ namespace lve {
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(device->swapChainExtent.width);
-        viewport.height = static_cast<float>(device->swapChainExtent.height);
+        viewport.width = static_cast<float>(swapChain->swapChainExtent.width);
+        viewport.height = static_cast<float>(swapChain->swapChainExtent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
-        scissor.extent = device->swapChainExtent;
+        scissor.extent = swapChain->swapChainExtent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
         vkCmdDraw(commandBuffer, 3, 1, 0, 0);
@@ -269,7 +278,7 @@ namespace lve {
         vkResetFences(device->device, 1, &inFlightFence);
 
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(device->device, device->swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        vkAcquireNextImageKHR(device->device, swapChain->swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
         vkResetCommandBuffer(commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
         recordCommandBuffer(commandBuffer, imageIndex);
@@ -300,7 +309,7 @@ namespace lve {
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = {device->swapChain};
+        VkSwapchainKHR swapChains[] = {swapChain->swapChain};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
 
